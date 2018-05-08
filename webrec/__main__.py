@@ -22,15 +22,48 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
+from __future__ import print_function
+
 import sys
 import argparse
+import os
 
-import cv2
 import numpy as np
+from PyQt5 import QtWidgets, QtMultimedia
+
+from .mainwindow import MainWindow
+
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--list', '-l', action='store_true',
+            help='list available camera devices')
+    parser.add_argument('--device', '-d', type=int, default=0,
+            help='index of the camera device')
+    parser.add_argument('--fullscreen', '-f', action='store_true',
+            help='show window in full screen')
+    parser.add_argument('--output', '-o', type=str, default=os.path.expanduser('~'),
+            help='directory where output files are stored')
     args = parser.parse_args()
+
+    cameras = QtMultimedia.QCameraInfo.availableCameras()
+    if args.list:
+        for i, info in enumerate(cameras):
+            print('{}: {}'.format(i, info.description()))
+        return 0
+
+    if args.device < 0 or args.device >= len(cameras):
+        print('Invalid camera index or no devices found', file=sys.stderr)
+        return 1
+
+    app = QtWidgets.QApplication(sys.argv)
+    w = MainWindow(camera_info=cameras[args.device], output_path=args.output)
+    if args.fullscreen:
+        w.showFullScreen()
+    else:
+        w.show()
+    return app.exec_()
+
 
 if __name__ == '__main__':
     sys.exit(main() or 0)

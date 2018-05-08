@@ -15,8 +15,10 @@ setup(name='webcam-recorder',
     entry_points={
         'console_scripts': ['webrec = webrec.__main__:main']
     },
+    package_data={
+        'webrec': ['resources/*.ui']
+    },
     install_requires=[
-        'numpy',
-        'opencv-python',
+        'pyqt5',
     ],
 )
