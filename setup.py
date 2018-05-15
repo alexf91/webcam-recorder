@@ -16,7 +16,7 @@ setup(name='webcam-recorder',
         'console_scripts': ['webrec = webrec.__main__:main']
     },
     package_data={
-        'webrec': ['resources/*.ui']
+        'webrec': ['resources/*.ui', 'resources/*.png']
     },
     install_requires=[
         'pyqt5',

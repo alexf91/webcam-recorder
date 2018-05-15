@@ -22,10 +22,49 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-from __future__ import print_function
+from __future__ import print_function, division
 
 import os
+import pkgutil
+import datetime as dt
+
 from PyQt5 import QtCore, QtGui, QtWidgets, QtMultimedia, QtMultimediaWidgets, uic
+
+class ButtonSignalSender(QtCore.QObject):
+    clicked = QtCore.pyqtSignal()
+
+class ButtonItem(QtWidgets.QGraphicsPixmapItem):
+    """Item for the GraphicsView that emits a signal when clicked."""
+
+    def __init__(self, imagedata, parent=None):
+        img  = QtGui.QImage.fromData(imagedata)
+        pxmap = QtGui.QPixmap.fromImage(img)
+        super(ButtonItem, self).__init__(pxmap, parent=parent)
+        self.signalSource = ButtonSignalSender()
+
+        self.setTransformationMode(QtCore.Qt.SmoothTransformation)
+        self.xscale = 1.0
+        self.yscale = 1.0
+
+    def setSize(self, width, height):
+        """Set the size (in pixels) of the object.
+        This changes the transformation matrix of the underlying pixmap item.
+        """
+        self.xscale = width / self.pixmap().width()
+        self.yscale = height / self.pixmap().height()
+        trans = QtGui.QTransform()
+        trans.scale(self.xscale, self.yscale)
+        self.setTransform(trans)
+
+    def width(self):
+        return self.pixmap().width() * self.xscale
+
+    def height(self):
+        return self.pixmap().height() * self.yscale
+
+    def mousePressEvent(self, event):
+        self.signalSource.clicked.emit()
+
 
 class Viewfinder(QtWidgets.QGraphicsView):
     """Previews the camera image and provides controls for recording."""
@@ -38,12 +77,23 @@ class Viewfinder(QtWidgets.QGraphicsView):
 
         self.camera = None
         self.recordDir = os.path.expanduser('~')
-        self.preview = QtMultimediaWidgets.QGraphicsVideoItem()
 
         self.scene = QtWidgets.QGraphicsScene()
         self.scene.setBackgroundBrush(QtCore.Qt.black)
-        self.scene.addItem(self.preview)
         self.setScene(self.scene)
+
+        # Camera preview
+        self.preview = QtMultimediaWidgets.QGraphicsVideoItem()
+        self.scene.addItem(self.preview)
+
+        # Record and stop button. The record button is initially added to the scene.
+        self.stopItem = ButtonItem(pkgutil.get_data('webrec', 'resources/stop_icon.png'))
+        self.stopItem.signalSource.clicked.connect(self.stopClicked)
+        self.recordItem = ButtonItem(pkgutil.get_data('webrec', 'resources/record_icon.png'))
+        self.recordItem.signalSource.clicked.connect(self.recordClicked)
+        self.scene.addItem(self.recordItem)
+
+        self.resize(self.width(), self.height())
 
     @QtCore.pyqtSlot(QtMultimedia.QCamera)
     def setCamera(self, camera):
@@ -62,3 +112,22 @@ class Viewfinder(QtWidgets.QGraphicsView):
         """Set the size of the viewfinder."""
         self.scene.setSceneRect(0, 0, width, height)
         self.preview.setSize(QtCore.QSizeF(width, height))
+
+        sidelength = height * 0.2
+
+        for item in (self.recordItem, self.stopItem):
+            item.setSize(sidelength, sidelength)
+            item.setPos((width - item.width()) // 2, (height - item.height()) * 0.8)
+
+    @QtCore.pyqtSlot()
+    def recordClicked(self):
+        self.scene.removeItem(self.recordItem)
+        self.scene.addItem(self.stopItem)
+        fname = dt.datetime.now().strftime('%Y%m%dT%H%M%S.mp4')
+        self.recordStarted.emit(os.path.join(self.recordDir, fname))
+
+    @QtCore.pyqtSlot()
+    def stopClicked(self):
+        self.scene.removeItem(self.stopItem)
+        self.scene.addItem(self.recordItem)
+        self.recordStopped.emit()
