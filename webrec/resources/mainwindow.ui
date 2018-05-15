@@ -22,7 +22,7 @@
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QGraphicsView" name="graphicsView">
+     <widget class="Viewfinder" name="viewfinder">
       <property name="verticalScrollBarPolicy">
        <enum>Qt::ScrollBarAlwaysOff</enum>
       </property>
@@ -34,6 +34,13 @@
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Viewfinder</class>
+   <extends>QGraphicsView</extends>
+   <header>webrec.viewfinder</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

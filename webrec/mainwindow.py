@@ -31,6 +31,8 @@ from io import StringIO
 
 from PyQt5 import QtCore, QtGui, QtWidgets, QtMultimedia, QtMultimediaWidgets, uic
 
+from .recorder import Recorder
+
 class MainWindow(QtWidgets.QMainWindow):
     """Main window of the recorder."""
 
@@ -42,36 +44,34 @@ class MainWindow(QtWidgets.QMainWindow):
         uic.loadUi(uifile, self)
         self.output_path = output_path
 
-        # Stream the viewfinder of the camera into a QGraphicsVideoItem
-        self.camera = QtMultimedia.QCamera(camera_info)
-        self.viewfinder = QtMultimediaWidgets.QGraphicsVideoItem()
-        self.camera.setViewfinder(self.viewfinder)
+        # Display the camera image on viewfinder
+        camera = QtMultimedia.QCamera(camera_info)
+        self.viewfinder.setCamera(camera)
+        self.viewfinder.setRecordDirectory(output_path)
 
-        # Add the item to a scene
-        self.scene = QtWidgets.QGraphicsScene()
-        self.scene.setBackgroundBrush(QtCore.Qt.black)
-        self.scene.addItem(self.viewfinder)
+        # Initialize the recorder and connect the signals
+        self.recorder = Recorder(parent=self)
+        self.recorder.setCamera(camera)
 
-        # Add the scene to the view and start the camera
-        self.graphicsView.setScene(self.scene)
-        self.camera.start()
+        # Connect the signals
+        self.viewfinder.recordStarted.connect(self.recorder.startRecording)
+        self.viewfinder.recordStopped.connect(self.recorder.stopRecording)
 
-        # Recorder
-        self.recorder = QtMultimedia.QMediaRecorder(self.camera)
+        #self.viewfinder = QtMultimediaWidgets.QGraphicsVideoItem()
+        #self.camera.setViewfinder(self.viewfinder)
+
+        ## Add the item to a scene
+        #self.scene = QtWidgets.QGraphicsScene()
+        #self.scene.setBackgroundBrush(QtCore.Qt.black)
+        #self.scene.addItem(self.viewfinder)
+
+        ## Add the scene to the view and start the camera
+        #self.viewfinder.setScene(self.scene)
+        #self.camera.start()
+
+        ## Recorder
+        #self.recorder = QtMultimedia.QMediaRecorder(self.camera)
 
     def resizeEvent(self, event):
         """Window was resized."""
-        self.scene.setSceneRect(0, 0, event.size().width(), event.size().height())
-        self.viewfinder.setSize(QtCore.QSizeF(event.size()))
-
-    def mousePressEvent(self, event):
-        if self.recorder.state() == QtMultimedia.QMediaRecorder.StoppedState:
-            fname = dt.datetime.now().strftime('%y%m%d-%H%M%S.mp4')
-            fpath = 'file://' + os.path.join(self.output_path, fname)
-            self.recorder.setOutputLocation(QtCore.QUrl(fpath))
-            self.recorder.record()
-            print('Starting')
-
-        else:
-            self.recorder.stop()
-            print('Stopping')
+        self.viewfinder.resize(event.size().width(), event.size().height())
