@@ -123,7 +123,7 @@ class Viewfinder(QtWidgets.QGraphicsView):
     def recordClicked(self):
         self.scene.removeItem(self.recordItem)
         self.scene.addItem(self.stopItem)
-        fname = dt.datetime.now().strftime('%Y%m%dT%H%M%S.mp4')
+        fname = dt.datetime.now().strftime('%Y%m%dT%H%M%S')
         self.recordStarted.emit(os.path.join(self.recordDir, fname))
 
     @QtCore.pyqtSlot()

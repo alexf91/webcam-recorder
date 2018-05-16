@@ -46,6 +46,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Display the camera image on viewfinder
         camera = QtMultimedia.QCamera(camera_info)
+        camera.setCaptureMode(QtMultimedia.QCamera.CaptureVideo)
         self.viewfinder.setCamera(camera)
         self.viewfinder.setRecordDirectory(output_path)
 
@@ -56,21 +57,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # Connect the signals
         self.viewfinder.recordStarted.connect(self.recorder.startRecording)
         self.viewfinder.recordStopped.connect(self.recorder.stopRecording)
-
-        #self.viewfinder = QtMultimediaWidgets.QGraphicsVideoItem()
-        #self.camera.setViewfinder(self.viewfinder)
-
-        ## Add the item to a scene
-        #self.scene = QtWidgets.QGraphicsScene()
-        #self.scene.setBackgroundBrush(QtCore.Qt.black)
-        #self.scene.addItem(self.viewfinder)
-
-        ## Add the scene to the view and start the camera
-        #self.viewfinder.setScene(self.scene)
-        #self.camera.start()
-
-        ## Recorder
-        #self.recorder = QtMultimedia.QMediaRecorder(self.camera)
 
     def resizeEvent(self, event):
         """Window was resized."""

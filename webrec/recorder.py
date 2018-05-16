@@ -40,9 +40,12 @@ class Recorder(QtCore.QObject):
     @QtCore.pyqtSlot(str)
     def startRecording(self, filename):
         """Record the stream to the passed file."""
-        print('Start recording to %s' % filename)
+        if self.recorder is not None:
+            self.recorder.setOutputLocation(QtCore.QUrl.fromLocalFile(filename))
+            self.recorder.record()
 
     @QtCore.pyqtSlot()
     def stopRecording(self):
         """Stop recording to the file."""
-        print('Stop recording')
+        if self.recorder is not None:
+            self.recorder.stop()
